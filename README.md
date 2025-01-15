@@ -133,7 +133,7 @@ This algorithm provides an approximate solution by:
 2. Solving TSP for each cluster using a greedy approach with 2-opt optimization.
 3. Merging the clusters into a global tour and applying 2-opt again for refinement.
 
-   This algorithm is running each cluster (k) on a seperate thread. **Parallel processing** of clusters significantly reduces the runtime, especially when the number of clusters and their sizes are large.
+This algorithm is running each cluster (k) on a seperate thread. **Parallel processing** of clusters significantly reduces the runtime, especially when the number of clusters and their sizes are large.
 
 ### 2-Opt Algorithm:
 
