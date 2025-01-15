@@ -14,7 +14,6 @@ This document explains four algorithms for solving the **Traveling Salesman Prob
 ---
 
 ## 1. Brute Force Algorithm
-
 ### Approach
 
 The brute force approach involves generating all possible permutations of the cities and calculating the total distance for each permutation. It guarantees to find the optimal solution but becomes computationally infeasible for large problem sizes due to its exponential time complexity.
@@ -41,7 +40,6 @@ The brute force approach involves generating all possible permutations of the ci
 ---
 
 ## 2. Dynamic Programming Approach
-
 ### Approach
 
 This approach uses a dynamic programming table to store subproblem solutions. It builds solutions iteratively by combining smaller subproblems. It is efficient for small to medium-sized inputs. 
@@ -68,7 +66,6 @@ This approach uses a dynamic programming table to store subproblem solutions. It
 ---
 
 ## 3. Christofides Algorithm
-
 ### Approach
 
 The Christofides Algorithm is a polynomial-time **approximation algorithm** that guarantees a solution **no worse than 1.5 times the optimal**. This algorithm is suitable for complete graphs.  The graph should also be **metric** which means: 
@@ -128,7 +125,6 @@ The Christofides Algorithm is a polynomial-time **approximation algorithm** that
 ---
 
 ## 4. Clustering and 2-Opt Algorithm
-
 ### Approach
 
 This algorithm provides an approximate solution by:
@@ -180,7 +176,6 @@ step4
 - **Space Complexity**: O(V + E).
 
 This algorithm is running each cluster (k) on a seperate thread. **Parallel processing** of clusters significantly reduces the runtime, especially when the number of clusters and their sizes are large.
-
 ---
 
 ## Comparison of Approaches
