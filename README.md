@@ -174,7 +174,6 @@ step4
 
 - **Time Complexity**: O(V² ).
 - **Space Complexity**: O(V + E).
-
 This algorithm is running each cluster (k) on a seperate thread. **Parallel processing** of clusters significantly reduces the runtime, especially when the number of clusters and their sizes are large.
 ---
 
