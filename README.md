@@ -139,19 +139,19 @@ This algorithm provides an approximate solution by:
 
 ### 2-Opt Algorithm:
 
-![step1 ](Design%20and%20Analysis%20of%20Algorithms%20172aae254df08008bad4fad3f5a0297a/IMG_8668.png)
+![IMG_8668](https://github.com/user-attachments/assets/c0b7fef0-5fa4-4372-982c-59d43ceb4fd7)
 
 step1 
 
-![step2](Design%20and%20Analysis%20of%20Algorithms%20172aae254df08008bad4fad3f5a0297a/IMG_8669.png)
+![IMG_8669](https://github.com/user-attachments/assets/35851f61-8e9b-4827-a57b-98801e2fe624)
 
 step2
 
-![step3](Design%20and%20Analysis%20of%20Algorithms%20172aae254df08008bad4fad3f5a0297a/IMG_8670.png)
+![IMG_8670](https://github.com/user-attachments/assets/2131437f-fac9-4a11-9534-823eeafa2dc4)
 
 step3
 
-![step4](Design%20and%20Analysis%20of%20Algorithms%20172aae254df08008bad4fad3f5a0297a/IMG_8671.png)
+![IMG_8671](https://github.com/user-attachments/assets/c2ec9469-b568-420d-a22f-0e3518125d0a)
 
 step4
 
