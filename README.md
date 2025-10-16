@@ -196,9 +196,9 @@ step4
 - added the generate_graph script
 - Modified the programs to show how long they took to find the solution
 
-## Bugs Fixed
+### Bugs Fixed
 
-### Missing Reverse Edges in Christofides
+#### Missing Reverse Edges in Christofides
 
 **File**: `ChristofidesAlgorithmGUI.java`  
 **Location**: Lines 95-104  
