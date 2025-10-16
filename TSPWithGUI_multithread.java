@@ -22,7 +22,7 @@ public class TSPWithGUI_multithread {
             writer.write("Timestamp: " + currentTime + "\n");
             writer.write("Final Tour: " + finalTour + "\n");
             writer.write("Cost: " + String.format("%.2f", cost) + "\n");
-            writer.write("Elapsed Time: " + String.format("%.2f", elapsedSeconds) + " seconds\n");
+            writer.write("Elapsed Time: " + String.format("%.4f", elapsedSeconds) + " seconds\n");
         } catch (IOException e) {
             System.err.println("Error writing to file: " + e.getMessage());
         }
@@ -323,7 +323,7 @@ public class TSPWithGUI_multithread {
 
                         textArea.setText("Final Tour: " + finalTour + "\n");
                         textArea.append("Cost: " + String.format("%.2f", cost) + "\n");
-                        textArea.append("Elapsed Time: " + String.format("%.2f", elapsedSeconds) + " seconds");
+                        textArea.append("Elapsed Time: " + String.format("%.4f", elapsedSeconds) + " seconds");
 
                         // Write results to a file with timestamp
                         writeTourToFile("TSP_Solution.txt", finalTour, cost, elapsedSeconds);

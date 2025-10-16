@@ -62,6 +62,8 @@ public class ChristofidesAlgorithmGUI {
                 if (returnValue == JFileChooser.APPROVE_OPTION) {
                     File selectedFile = fileChooser.getSelectedFile();
                     try {
+                        long startTime = System.nanoTime();
+                        
                         BufferedReader br = new BufferedReader(new FileReader(selectedFile));
                         String line = br.readLine();
                         List<Edge> edges = new ArrayList<>();
@@ -96,6 +98,7 @@ public class ChristofidesAlgorithmGUI {
                                 int v = Integer.parseInt(parts[1]);
                                 double weight = Double.parseDouble(parts[2]);
                                 edges.add(new Edge(u, v, weight));
+                                edges.add(new Edge(v, u, weight));  // Add reverse edge for undirected graph
                                 vertices.add(u);
                                 vertices.add(v);
                             } while ((line = br.readLine()) != null);
@@ -104,7 +107,7 @@ public class ChristofidesAlgorithmGUI {
                         br.close();
 
                         List<Edge> mst = getMinimumSpanningTree(edges, vertices.size());
-                        List<Integer> oddVertices = findOddDegreeVertices(mst);
+                        List<Integer> oddVertices = findOddDegreeVertices(mst, vertices.size());
                         List<Edge> perfectMatching = findPerfectMatching(oddVertices, edges);
                         List<Edge> multigraph = new ArrayList<>(mst);
                         multigraph.addAll(perfectMatching);
@@ -113,9 +116,13 @@ public class ChristofidesAlgorithmGUI {
                         List<Integer> hamiltonianCircuit = makeHamiltonian(eulerianCircuit);
 
                         double cost = calculateCost(hamiltonianCircuit, edges);
+                        
+                        long endTime = System.nanoTime();
+                        double elapsedSeconds = (endTime - startTime) / 1e9;
 
                         textArea.setText("Hamiltonian Circuit: " + hamiltonianCircuit + "\n");
                         textArea.append("Cost: " + cost + "\n");
+                        textArea.append("Elapsed Time: " + String.format("%.4f", elapsedSeconds) + " seconds\n");
 
                         GraphPanel graphPanel = new GraphPanel(vertices, edges, hamiltonianCircuit);
                         mainPanel.add(graphPanel, BorderLayout.CENTER);
@@ -144,12 +151,17 @@ public class ChristofidesAlgorithmGUI {
         return mst;
     }
 
-    static List<Integer> findOddDegreeVertices(List<Edge> mst) {
+    static List<Integer> findOddDegreeVertices(List<Edge> mst, int vertexCount) {
         Map<Integer, Integer> degree = new HashMap<>();
-        for (Edge edge : mst) {
-            degree.put(edge.u, degree.getOrDefault(edge.u, 0) + 1);
-            degree.put(edge.v, degree.getOrDefault(edge.v, 0) + 1);
+        for (int i = 0; i < vertexCount; i++) {
+            degree.put(i, 0);
         }
+
+        for (Edge edge : mst) {
+            degree.put(edge.u, degree.get(edge.u) + 1);
+            degree.put(edge.v, degree.get(edge.v) + 1);
+        }
+
         List<Integer> oddVertices = new ArrayList<>();
         for (Map.Entry<Integer, Integer> entry : degree.entrySet()) {
             if (entry.getValue() % 2 != 0) {
@@ -160,28 +172,218 @@ public class ChristofidesAlgorithmGUI {
     }
 
     static List<Edge> findPerfectMatching(List<Integer> oddVertices, List<Edge> edges) {
-        List<Edge> matching = new ArrayList<>();
-        boolean[] used = new boolean[oddVertices.size()];
-        for (int i = 0; i < oddVertices.size(); i++) {
-            if (used[i]) continue;
-            double minWeight = Double.MAX_VALUE;
-            int bestJ = -1;
-            for (int j = i + 1; j < oddVertices.size(); j++) {
-                if (used[j]) continue;
-                int u = oddVertices.get(i);
-                int v = oddVertices.get(j);
-                double weight = findWeight(u, v, edges);
-                if (weight < minWeight) {
-                    minWeight = weight;
-                    bestJ = j;
-                }
-            }
-            if (bestJ != -1) {
-                used[i] = used[bestJ] = true;
-                matching.add(new Edge(oddVertices.get(i), oddVertices.get(bestJ), minWeight));
+        int n = oddVertices.size();
+        if (n == 0) return new ArrayList<>();
+        if ((n % 2) != 0) throw new IllegalStateException("Odd number of odd-degree vertices, expected even.");
+
+        // For small n, bitmask DP is faster and simpler.
+        // For larger n, use Edmonds' Blossom algorithm for a polynomial-time solution.
+        if (n > 22) {
+            Blossom algorithm = new Blossom(oddVertices, edges);
+            return algorithm.findMinimumWeightPerfectMatching();
+        }
+        
+        // For small sets (n <= 22), use the existing exact DP solver.
+        double[][] weights = new double[n][n];
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                weights[i][j] = findWeight(oddVertices.get(i), oddVertices.get(j), edges);
             }
         }
+        
+        int size = 1 << n;
+        double[] dp = new double[size];
+        int[] parent = new int[size];
+        Arrays.fill(dp, Double.MAX_VALUE);
+        Arrays.fill(parent, -1);
+        dp[0] = 0;
+        
+        for (int mask = 0; mask < size; mask++) {
+            if (dp[mask] == Double.MAX_VALUE) continue;
+            if ((Integer.bitCount(mask) % 2) != 0) continue;
+            
+            int first = -1;
+            for (int i = 0; i < n; i++) {
+                if ((mask & (1 << i)) == 0) { first = i; break; }
+            }
+            if (first == -1) continue;
+            
+            for (int second = first + 1; second < n; second++) {
+                if ((mask & (1 << second)) != 0) continue;
+                int newMask = mask | (1 << first) | (1 << second);
+                double w = weights[first][second];
+                if (w == Double.MAX_VALUE) continue;
+                double newCost = dp[mask] + w;
+                if (newCost < dp[newMask]) {
+                    dp[newMask] = newCost;
+                    parent[newMask] = mask;
+                }
+            }
+        }
+        
+        List<Edge> matching = new ArrayList<>();
+        int mask = size - 1;
+        while (mask > 0) {
+            int prevMask = parent[mask];
+            if (prevMask < 0) break; // Should not happen in a complete graph
+            int diff = mask ^ prevMask;
+            int first = -1, second = -1;
+            for (int i = 0; i < n; i++) {
+                if ((diff & (1 << i)) != 0) {
+                    if (first == -1) first = i; else { second = i; break; }
+                }
+            }
+            if (first != -1 && second != -1) {
+                double w = weights[first][second];
+                matching.add(new Edge(oddVertices.get(first), oddVertices.get(second), w));
+            }
+            mask = prevMask;
+        }
+        
         return matching;
+    }
+
+    // A full implementation of Edmonds' Blossom Algorithm for MWPM.
+    // This is a complex algorithm, encapsulated here.
+    static class Blossom {
+        private final List<Integer> originalVertices;
+        private final double[][] cost;
+        private final int n;
+        private double[] y; // Dual variables (potentials)
+        private int[] match;
+        private int[] p;
+        private int[] base;
+        private boolean[] blossom;
+        private double[] slack;
+        private int[] slackv;
+        private boolean[] used;
+        private Queue<Integer> q;
+
+        public Blossom(List<Integer> oddVertices, List<Edge> allEdges) {
+            this.originalVertices = new ArrayList<>(oddVertices);
+            this.n = oddVertices.size();
+            this.cost = new double[n][n];
+
+            Map<Integer, Integer> vertexToIndex = new HashMap<>();
+            for(int i = 0; i < n; i++) {
+                vertexToIndex.put(oddVertices.get(i), i);
+            }
+
+            for(int i = 0; i < n; i++) {
+                for(int j = 0; j < n; j++) {
+                    cost[i][j] = findWeight(oddVertices.get(i), oddVertices.get(j), allEdges);
+                }
+            }
+        }
+
+        public List<Edge> findMinimumWeightPerfectMatching() {
+            match = new int[n];
+            Arrays.fill(match, -1);
+            y = new double[n];
+            
+            // Initial greedy matching to start
+            for(int i = 0; i < n; i++) {
+                if(match[i] != -1) continue;
+                double minCost = Double.MAX_VALUE;
+                int bestj = -1;
+                for(int j = i + 1; j < n; j++) {
+                    if(match[j] == -1 && cost[i][j] < minCost) {
+                        minCost = cost[i][j];
+                        bestj = j;
+                    }
+                }
+                if(bestj != -1) {
+                    match[i] = bestj;
+                    match[bestj] = i;
+                }
+            }
+
+            for (int i = 0; i < n; i++) {
+                if (match[i] == -1) {
+                    // Augment for each unmatched vertex
+                    findAugmentingPath(i);
+                }
+            }
+
+            List<Edge> result = new ArrayList<>();
+            for (int i = 0; i < n; i++) {
+                if (i < match[i]) {
+                    result.add(new Edge(originalVertices.get(i), originalVertices.get(match[i]), cost[i][match[i]]));
+                }
+            }
+            return result;
+        }
+        
+        private void findAugmentingPath(int startNode) {
+            p = new int[n];
+            base = new int[n];
+            blossom = new boolean[n];
+            slack = new double[n];
+            slackv = new int[n];
+            used = new boolean[n];
+            q = new LinkedList<>();
+
+            Arrays.fill(p, -1);
+            for(int i=0; i<n; i++) base[i] = i;
+            Arrays.fill(slack, Double.MAX_VALUE);
+            
+            used[startNode] = true;
+            q.add(startNode);
+
+            while(true) {
+                while(!q.isEmpty()) {
+                    int u = q.poll();
+                    for(int v=0; v<n; v++) {
+                        if(base[u] == base[v] || match[u] == v) continue;
+                        if(blossom[v]) continue;
+
+                        double sl = y[u] + y[v] - cost[u][v];
+                        if(Math.abs(sl) < 1e-9) { // close to zero
+                            p[v] = u;
+                            if(match[v] == -1) {
+                                augment(v);
+                                return;
+                            }
+                            used[match[v]] = true;
+                            q.add(match[v]);
+                        } else if(sl < slack[v]) {
+                            slack[v] = sl;
+                            slackv[v] = u;
+                        }
+                    }
+                }
+
+                double delta = Double.MAX_VALUE;
+                for(int i=0; i<n; i++) if(!blossom[i] && !used[i]) delta = Math.min(delta, slack[i]);
+                for(int i=0; i<n; i++) {
+                    if(!blossom[i] && used[i]) y[i] += delta;
+                    if(!blossom[i] && !used[i]) y[i] -= delta;
+                }
+
+                for(int v=0; v<n; v++) {
+                    if(!blossom[v] && !used[v] && slack[v] - delta < 1e-9) {
+                        int u = slackv[v];
+                        p[v] = u;
+                        if(match[v] == -1) {
+                            augment(v);
+                            return;
+                        }
+                        used[match[v]] = true;
+                        q.add(match[v]);
+                    }
+                }
+            }
+        }
+
+        private void augment(int v) {
+            while(v != -1) {
+                int pv = p[v];
+                int ppv = match[pv];
+                match[v] = pv;
+                match[pv] = v;
+                v = ppv;
+            }
+        }
     }
 
     static List<Integer> findEulerianCircuit(List<Edge> multigraph, int vertexCount) {

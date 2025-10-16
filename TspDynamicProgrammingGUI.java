@@ -190,6 +190,8 @@ public class TspDynamicProgrammingGUI {
                 if (returnValue == JFileChooser.APPROVE_OPTION) {
                     File selectedFile = fileChooser.getSelectedFile();
                     try {
+                        long startTime = System.nanoTime();
+                        
                         BufferedReader br = new BufferedReader(new FileReader(selectedFile));
                         String line = br.readLine();
                         double[][] distanceMatrix;
@@ -250,9 +252,13 @@ public class TspDynamicProgrammingGUI {
 
                         List<Integer> tour = solver.getTour();
                         double cost = solver.getTourCost();
+                        
+                        long endTime = System.nanoTime();
+                        double elapsedSeconds = (endTime - startTime) / 1e9;
 
                         textArea.setText("Tour: " + tour + "\n");
                         textArea.append("Cost: " + cost + "\n");
+                        textArea.append("Elapsed Time: " + String.format("%.4f", elapsedSeconds) + " seconds\n");
 
                         GraphPanel graphPanel = new GraphPanel(tour, null);
                         mainPanel.add(graphPanel, BorderLayout.CENTER);

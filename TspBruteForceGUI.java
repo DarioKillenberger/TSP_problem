@@ -110,6 +110,8 @@ public class TspBruteForceGUI {
                 if (returnValue == JFileChooser.APPROVE_OPTION) {
                     File selectedFile = fileChooser.getSelectedFile();
                     try {
+                        long startTime = System.nanoTime();
+                        
                         BufferedReader br = new BufferedReader(new FileReader(selectedFile));
                         String line = br.readLine();
                         double[][] distanceMatrix;
@@ -165,19 +167,31 @@ public class TspBruteForceGUI {
 
                         br.close();
 
-                        if (distanceMatrix.length > 20) {
-                            JOptionPane.showMessageDialog(frame, "Input size too large for brute force approach. Please use a smaller graph.", "Error", JOptionPane.ERROR_MESSAGE);
-                            return;
+                        // Warning for large graphs
+                        if (distanceMatrix.length > 12) {
+                            int choice = JOptionPane.showConfirmDialog(frame, 
+                                "Warning: Brute force with " + distanceMatrix.length + " nodes will be EXTREMELY slow!\n" +
+                                "Continue anyway?", 
+                                "Performance Warning", 
+                                JOptionPane.YES_NO_OPTION,
+                                JOptionPane.WARNING_MESSAGE);
+                            if (choice != JOptionPane.YES_OPTION) {
+                                return;
+                            }
                         }
 
                         int[] bestTour = tsp(distanceMatrix);
                         double tourCost = computeTourCost(bestTour, distanceMatrix);
+                        
+                        long endTime = System.nanoTime();
+                        double elapsedSeconds = (endTime - startTime) / 1e9;
 
                         if (tourCost == Double.POSITIVE_INFINITY) {
                             textArea.setText("The graph is not fully connected. No valid tour exists.\n");
                         } else {
                             textArea.setText("Best Tour: " + Arrays.toString(bestTour) + "\n");
                             textArea.append("Tour Cost: " + tourCost + "\n");
+                            textArea.append("Elapsed Time: " + String.format("%.4f", elapsedSeconds) + " seconds\n");
                         }
 
                         List<Integer> tourList = new ArrayList<>();

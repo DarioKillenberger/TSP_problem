@@ -300,13 +300,13 @@ public class TSPWithGUI {
                         // Display in text area
                         textArea.setText("Final Tour: " + finalTour + "\n");
                         textArea.append("Cost: " + String.format("%.2f", cost) + "\n");
-                        textArea.append("Elapsed Time: " + String.format("%.2f", elapsedSeconds) + " seconds");
+                        textArea.append("Elapsed Time: " + String.format("%.4f", elapsedSeconds) + " seconds");
 
                         // Save output to a text file
                         try (PrintWriter writer = new PrintWriter(new FileWriter("TSP_Output.txt"))) {
                             writer.println("Final Tour: " + finalTour);
                             writer.println("Cost: " + String.format("%.2f", cost));
-                            writer.println("Elapsed Time: " + String.format("%.2f", elapsedSeconds) + " seconds");
+                            writer.println("Elapsed Time: " + String.format("%.4f", elapsedSeconds) + " seconds");
                             writer.println("Input Graph File: " + selectedFile.getAbsolutePath());
                         } catch (IOException fileEx) {
                             JOptionPane.showMessageDialog(frame, "Error writing to file: " + fileEx.getMessage(),
